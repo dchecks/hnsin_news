@@ -1,4 +1,5 @@
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
 
 from flask import Flask, render_template, send_from_directory
 from flask_caching import Cache
@@ -20,9 +21,9 @@ app = Flask(__name__)
 app.config.from_mapping(config)
 cache = Cache(app)
 
-with open('blacklist.txt') as black_file:
-    black_list = black_file.readlines()
-    print("Blacklist contained %s items" % len(black_list))
+with open("blacklist.txt") as f:
+    black_list = [line.strip() for line in f]
+print("Blacklist contained %s items" % len(black_list))
 
 
 @app.route('/hello')
@@ -30,6 +31,7 @@ with open('blacklist.txt') as black_file:
 def hello_world():
     return str(datetime.utcnow())
 
+tp = ThreadPool
 
 @app.route('/')
 @cache.cached(timeout=180)
@@ -37,12 +39,13 @@ def article_list():
     hn_ids = requests.get(TOP_URL).json()
     articles = []
     for aid in hn_ids:
+
         article = hn_fetch_article(aid)
         if article is None:
             continue
         elif article.site not in black_list:
             articles.append(article)
-            if len(articles) == 3:
+            if len(articles) == 30:
                 break
 
     return render_template('article_list.html', articles=articles)
