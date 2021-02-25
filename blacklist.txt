@@ -38,3 +38,4 @@ politico.eu
 forbes.com
 latimes.com
 sky.com
+vice.com
