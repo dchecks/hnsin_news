@@ -35,3 +35,6 @@ theatlantic.com
 thestreet.com
 gq.com
 politico.eu
+forbes.com
+latimes.com
+sky.com
