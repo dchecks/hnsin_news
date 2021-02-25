@@ -1,0 +1,13 @@
+[Unit]
+Description=uWSGI instance to serve hnsin_news
+After=network.target
+
+[Service]
+User=newsweb
+Group=nginx
+WorkingDirectory=/opt/hnsin_news
+Environment="PATH=/opt/.virtualenv/hnsin_news/bin"
+ExecStart=uwsgi --ini wsgi_server.ini
+
+[Install]
+WantedBy=multi-user.target

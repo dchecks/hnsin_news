@@ -1,0 +1,108 @@
+yum -y install epel-release
+yum -y update
+yum install -y htop nano dstat git mlocate nload iftop wget ntpstat python3 nc lsof
+
+ln -s /usr/bin/python3 /usr/bin/python
+ln -s /usr/bin/pip3 /usr/bin/pip
+pip3 install virtualenv
+
+cat /etc/centos-release >> /etc/motd
+
+git clone https://github.com/dchecks/hnsin_news.git
+mv ~/hnsin_news /opt/hnsin_news
+cd /opt/hnsin_news
+
+
+mkdir -p /opt/.virtualenv
+/usr/local/bin/virtualenv /opt/.virtualenv/hnsin_news
+ln -s /opt/.virtualenv/hnsin_news/bin/activate /opt/hnsin_news/activate
+
+
+sudo chown -R danchecketts:danchecketts /opt/hnsin_news/
+sudo chown -R danchecketts:danchecketts /opt/.virtualenv/hnsin_news/
+
+source /opt/hnsin_news/activate
+pip install -r requirements.txt
+
+#Test
+export FLASK_APP=main.py
+flask run
+curl http://localhost:5000/hello
+
+# https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-centos-7
+
+# uwsgi entracnce point
+-- wsgi.py
+from main import app as application
+
+# wsgi insists that the app is called application
+
+if __name__ == "__main__":
+    application.run()
+
+
+# wsgi + nginx
+yum install python36-devel gcc nginx
+
+useradd -s /bin/false -r newsweb
+usermod -a -G newsweb nginx
+usermod -a -G newsweb danchecketts
+usermod -a -G nginx danchecketts
+# Logout and back in
+
+# Forwarding config
+-- /etc/nginx/nginx.conf
+# Add just before the first server block
+    server{
+    proxy_read_timeout  600;
+    proxy_send_timeout 	600;
+    send_timeout        600;
+	listen 80;
+        server_name hnsin.news;
+        location / {
+                include uwsgi_params;
+                uwsgi_pass unix:/opt/hnsin_news/dirty.sock;
+        }
+    }
+
+# Try it out
+uwsgi --socket 0.0.0.0:8000 --protocol=http -w wsgi
+
+-- wsgi_server.ini
+[uwsgi]
+module = wsgi
+
+pythonpath = ..
+
+master = true
+processes = 2
+
+socket = dirty.sock
+chmod-socket = 660
+vacuum = true
+
+die-on-term = true
+
+# Setup the service
+nano /etc/systemd/system/hnsin_news.service
+
+[Unit]
+Description=uWSGI instance to serve hnsin_news
+After=network.target
+
+[Service]
+User=newsweb
+Group=nginx
+WorkingDirectory=/opt/hnsin_news
+Environment="PATH=/opt/.virtualenv/hnsin_news/bin"
+ExecStart=/opt/.virtualenv/hnsin_news/bin/uwsgi --ini wsgi_server.ini
+
+[Install]
+WantedBy=multi-user.target
+
+# Start some services
+systemctl start hnsin_news
+systemctl enable hnsin_news
+
+systemctl start nginx
+systemctl enable nginx

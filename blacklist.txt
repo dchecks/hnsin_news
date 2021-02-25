@@ -34,3 +34,4 @@ arstechnica.com
 theatlantic.com
 thestreet.com
 gq.com
+politico.eu
