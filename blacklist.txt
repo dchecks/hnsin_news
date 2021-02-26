@@ -51,8 +51,6 @@ newsday.com
 zdnet.com
 geekwire.com
 nbcnewyork.com
-historytoday.com
-popularmechanics.com
 ft.com
 nbcchicago.com
 fortune.com
@@ -68,7 +66,6 @@ thetyee.ca
 newyorker.com
 variety.com
 nypost.com
-businessinsider.com
 autoweek.com
 law360.com
 autoblog.com
